@@ -1,0 +1,7 @@
+User-Interface-to-Bombel
+
+This code enables user to choose with encoder few options from menu displayed on LCD screen. Code is written by using Cube, HAL library and extra libraries to operate LCD display by using I2C. Code is designed for STM32 F411RE Nucleo.
+
+In file Src there is all neccessary code. HD44780-master , PCF8574-master in Src are files with libraries to operate LCD screen through I2C . In both there are main.c files with commented code (to see how functions from libraries are used). In Src there is main.c and there is implemented all menu. Struct&Fun.c and Struct&Fun.h are to implement user menu by using structures.
+
+Verion not ready and not tested.                                                         ÿÿÿÿÿÿÿÿÿÿÿÿ                                                                                                                    ÿÿÿÿÿÿÿÿÿÿÿÿ                                                                                                                    ÿÿÿÿÿÿÿÿÿÿÿÿ                                                
