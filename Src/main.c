@@ -53,13 +53,17 @@ I2C_HandleTypeDef hi2c1;
 SPI_HandleTypeDef hspi1;
 
 TIM_HandleTypeDef htim1;
+TIM_HandleTypeDef htim10;
 
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
 LCD_PCF8574_HandleTypeDef lcd;
 volatile uint16_t pulse_count; // Licznik impulsow TRZEBA PODPIAC D8 (A) i D7 (B)
 volatile uint16_t positions; // Licznik przekreconych pozycji
-bool isPressed=0; //zmienna czy przycisk wcisniety 1=tak , 0=nie jeszcze bez kodu inicjalizujacego
+volatile uint16_t valueToSet = 0; // wartosc do ustawienia
+bool isPressed=0; //zmienna informujaca czy przycisk zostal wcisniety 1 - tak , 0 - nie
+bool backPressed=0; // 1 - wcisnieto przycisk powrotu
+bool flag1=0, flag2=0; // zmienne do usuwania zjawiska drgan na stkach przyciskow
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -68,15 +72,31 @@ static void MX_GPIO_Init(void);
 static void MX_I2C1_Init(void);
 static void MX_TIM1_Init(void);
 static void MX_SPI1_Init(void);
+static void MX_TIM10_Init(void);
 
 /* USER CODE BEGIN PFP */
 /* Private function prototypes -----------------------------------------------*/
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){//obsluga przycisku enkodera
-	 if(GPIO_Pin == LCD_BUTTON_Pin)
-	 {
-		 isPressed = 1;
-	 }
+	if(flag2 == 1) return; // przerwanie zostalo wywolane zbyt szybko po wystapieniu poprzedniego - drgania
+	if(GPIO_Pin == LCD_BUTTON_Pin)
+	{
+		isPressed = 1;
+	}
+	if(GPIO_Pin == BACK_BUTTON_Pin)
+	{
+		backPressed = 1;
+	}
+
+	flag1 = 1; flag2 = 1; //ustawianie flag informujacych o tym ze przed chwila zostalo wywolane przerwanie
 }
+
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){ // przerwania timera generowane sa co 20ms
+	if(htim->Instance == TIM10){
+		if(flag1 == 1) flag1 = 0;  // zerowanie pierwszej flagi
+		else flag2 = 0; // zerowanie drugiej flagi - uplynela odpowiednia ilosc czasu (20 - 40ms)
+	}
+}
+void LCD_Setup();
 /* USER CODE END PFP */
 
 /* USER CODE BEGIN 0 */
@@ -111,60 +131,52 @@ int main(void)
   MX_I2C1_Init();
   MX_TIM1_Init();
   MX_SPI1_Init();
+  MX_TIM10_Init();
 
   /* USER CODE BEGIN 2 */
   HAL_TIM_Encoder_Start(&htim1, TIM_CHANNEL_ALL);
+  HAL_TIM_Base_Start_IT(&htim10);
 
-  HAL_Init();
+  LCD_Setup();
+  if(LCD_Init(&lcd)!=LCD_OK){
+	  // error occured
+	  while(1);
+  }
 
-    	HAL_NVIC_SetPriorityGrouping(NVIC_PRIORITYGROUP_4);
-    	HAL_NVIC_SetPriority(SysTick_IRQn, 0, 1);
+  LCD_ClearDisplay(&lcd);
 
-    	lcd.pcf8574.PCF_I2C_ADDRESS = 7;
-    	lcd.pcf8574.PCF_I2C_TIMEOUT = 1000;
-    	lcd.pcf8574.i2c.Instance = I2C1;
-    	lcd.pcf8574.i2c.Init.ClockSpeed = 400000;
-    	lcd.NUMBER_OF_LINES = NUMBER_OF_LINES_2;
-    	lcd.type = TYPE0;
+  menu mainMenu = stworzMenu();//stworzenie menu
+  TIM1->CNT=16;
 
-    	if(LCD_Init(&lcd)!=LCD_OK){
-    			// error occured
-    			while(1);
-    		}
-
-    	LCD_ClearDisplay(&lcd);
-    	LCD_WriteString(&lcd, "Choose option:");
-   		LCD_SetLocation(&lcd, 0, 1);
-   		LCD_WriteString(&lcd, "1. Do sth");
-
-   		menu stm = stworz();//stworzenie menu
-   		TIM1->CNT=12;
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	  	  pulse_count = TIM1->CNT; // przepisanie wartosci z rejestru timera
-	 	  positions = pulse_count/4; // zeskalowanie impulsow do liczby stabilnych pozycji walu enkodera
+	  pulse_count = TIM1->CNT; // przepisanie wartosci z rejestru timera
+	  positions = pulse_count/4; // zeskalowanie impulsow do liczby stabilnych pozycji walu enkodera
 
-	 	  switch( positions % 4)
+	 	  switch( positions % 5)
 	 	  {
+	 	  case 4 :
+	 		 mainMenu.zaprogram(&lcd);
+	 	      break;
 	 	  case 3 :
-	 		  stm.zaprogram(&lcd);
+	 		  mainMenu.tryb(&lcd);
 	 	      break;
 	 	  case 2 :
-	 		  stm.tryb(&lcd);
-	 	      break;
-	 	  case 1 :
-	 		  LCD_SetLocation(&lcd, 0, 1);
-	 		  LCD_WriteString(&lcd, "3. Hold     ");
+	 		  mainMenu.adjust(&lcd);
 	 	  	  break;
+	 	  case 1:
+	 		  mainMenu.hold(&lcd);
+	 		  break;
 	 	  case 0 :
-	 		  stm.zamknij(&lcd);
+	 		  mainMenu.zamknij(&lcd);
 	 		  break;
 	 	  }
-	 	 isPressed = 0;
+	 	 isPressed = 0; // nie da sie wejsc do niektorych pozycji menu a zapamietywanie przycisniecia jest w tym wypadku niepozadane
+	 	 backPressed = 0;
   /* USER CODE END WHILE */
 
   /* USER CODE BEGIN 3 */
@@ -190,10 +202,14 @@ void SystemClock_Config(void)
 
     /**Initializes the CPU, AHB and APB busses clocks 
     */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
-  RCC_OscInitStruct.HSIState = RCC_HSI_ON;
-  RCC_OscInitStruct.HSICalibrationValue = 16;
-  RCC_OscInitStruct.PLL.PLLState = RCC_PLL_NONE;
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
+  RCC_OscInitStruct.HSEState = RCC_HSE_ON;
+  RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
+  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
+  RCC_OscInitStruct.PLL.PLLM = 4;
+  RCC_OscInitStruct.PLL.PLLN = 100;
+  RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
+  RCC_OscInitStruct.PLL.PLLQ = 4;
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
   {
     _Error_Handler(__FILE__, __LINE__);
@@ -203,12 +219,12 @@ void SystemClock_Config(void)
     */
   RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
                               |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
-  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_HSI;
+  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
   RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
-  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
+  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV2;
   RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
 
-  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_0) != HAL_OK)
+  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_3) != HAL_OK)
   {
     _Error_Handler(__FILE__, __LINE__);
   }
@@ -305,6 +321,22 @@ static void MX_TIM1_Init(void)
 
 }
 
+/* TIM10 init function */
+static void MX_TIM10_Init(void)
+{
+
+  htim10.Instance = TIM10;
+  htim10.Init.Prescaler = 15999;
+  htim10.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim10.Init.Period = 20;
+  htim10.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  if (HAL_TIM_Base_Init(&htim10) != HAL_OK)
+  {
+    _Error_Handler(__FILE__, __LINE__);
+  }
+
+}
+
 /** Configure pins as 
         * Analog 
         * Input 
@@ -365,6 +397,12 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(LCD_BUTTON_GPIO_Port, &GPIO_InitStruct);
 
+  /*Configure GPIO pin : BACK_BUTTON_Pin */
+  GPIO_InitStruct.Pin = BACK_BUTTON_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  HAL_GPIO_Init(BACK_BUTTON_GPIO_Port, &GPIO_InitStruct);
+
   /*Configure GPIO pins : ENCODER_CS0_Pin MOTOR3_DIR_Pin MOTOR2_DIR_Pin MOTOR1_DIR_Pin 
                            MOTOR3_STEP_Pin MOTOR1_STEP_Pin MOTOR2_STEP_Pin ENCODER_CS1_Pin */
   GPIO_InitStruct.Pin = ENCODER_CS0_Pin|MOTOR3_DIR_Pin|MOTOR2_DIR_Pin|MOTOR1_DIR_Pin 
@@ -385,10 +423,21 @@ static void MX_GPIO_Init(void)
   HAL_NVIC_SetPriority(EXTI1_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(EXTI1_IRQn);
 
+  HAL_NVIC_SetPriority(EXTI2_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(EXTI2_IRQn);
+
 }
 
 /* USER CODE BEGIN 4 */
-
+void LCD_Setup()
+{
+   lcd.pcf8574.PCF_I2C_ADDRESS = 7;
+   lcd.pcf8574.PCF_I2C_TIMEOUT = 1000;
+   lcd.pcf8574.i2c.Instance = I2C1;
+   lcd.pcf8574.i2c.Init.ClockSpeed = 100000;
+   lcd.NUMBER_OF_LINES = NUMBER_OF_LINES_2;
+   lcd.type = TYPE0;
+}
 /* USER CODE END 4 */
 
 /**

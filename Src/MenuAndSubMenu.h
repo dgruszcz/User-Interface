@@ -1,5 +1,5 @@
 /*
- * Struct&Fun.h
+ * MenuAndSubmenu.h
  *
  *  Created on: 30.11.2017
  *      Author:
@@ -14,27 +14,32 @@
 
 extern volatile uint16_t pulse_count; // Licznik impulsow TRZEBA PODPI�� D8 (A) i D7  volatile uint16_t pulse_count; // Licznik impulsow TRZEBA PODPI�� D8 (A) i D7 (B)volatile uint16_t pulse_count; // Licznik impulsow TRZEBA PODPI�� D8 (A) i D7 (B)
 extern volatile uint16_t positions; //licznik enkodera
-extern bool isPressed; //czy guzik wcisniety
+extern volatile uint16_t valueToSet;
+extern bool isPressed, backPressed; //czy guzik wcisniety
 
 //------------------------Menu--------------------------------------
 
 struct menu {
    void (*zaprogram)(LCD_PCF8574_HandleTypeDef* lcd);
-   void (*zamknij)(LCD_PCF8574_HandleTypeDef* lcd);
    void (*tryb)(LCD_PCF8574_HandleTypeDef* lcd);
+   void (*hold)(LCD_PCF8574_HandleTypeDef* lcd);
+   void (*adjust)(LCD_PCF8574_HandleTypeDef* lcd);
+   void (*zamknij)(LCD_PCF8574_HandleTypeDef* lcd);
  };
 typedef struct menu menu;
 
-menu stworz (void);
+menu stworzMenu(void);
 
 //---------------------SubMenu1------------------------------------------------------
 
-struct submenu1 {
-   void (*manual)(LCD_PCF8574_HandleTypeDef* lcd);
-   void (*automat)(LCD_PCF8574_HandleTypeDef* lcd);
+struct submenu {
+   void (*action1)(LCD_PCF8574_HandleTypeDef* lcd);
+   void (*action2)(LCD_PCF8574_HandleTypeDef* lcd);
+   void (*action3)(LCD_PCF8574_HandleTypeDef* lcd);
  };
-typedef struct submenu1 submenu1;
 
-submenu1 stworzSubMenu1 (void);
+typedef struct submenu submenu;
+
+submenu stworzSubMenuTrybuPracy(void);
 
 #endif /* MENUANDSUBMENU_H_ */

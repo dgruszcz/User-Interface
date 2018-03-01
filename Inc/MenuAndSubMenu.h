@@ -1,5 +1,5 @@
 /*
- * Struct&Fun.h
+ * MenuAndSubmenu.h
  *
  *  Created on: 30.11.2017
  *      Author:
@@ -20,21 +20,24 @@ extern bool isPressed; //czy guzik wcisniety
 
 struct menu {
    void (*zaprogram)(LCD_PCF8574_HandleTypeDef* lcd);
-   void (*zamknij)(LCD_PCF8574_HandleTypeDef* lcd);
    void (*tryb)(LCD_PCF8574_HandleTypeDef* lcd);
+   void (*hold)(LCD_PCF8574_HandleTypeDef* lcd);
+   void (*adjust)(LCD_PCF8574_HandleTypeDef* lcd);
+   void (*zamknij)(LCD_PCF8574_HandleTypeDef* lcd);
  };
 typedef struct menu menu;
 
-menu stworz (void);
+menu stworzMenu(void);
 
 //---------------------SubMenu1------------------------------------------------------
 
-struct submenu1 {
-   void (*manual)(LCD_PCF8574_HandleTypeDef* lcd);
-   void (*automat)(LCD_PCF8574_HandleTypeDef* lcd);
+struct submenu {
+   void (*action1)(LCD_PCF8574_HandleTypeDef* lcd);
+   void (*action2)(LCD_PCF8574_HandleTypeDef* lcd);
+   void (*action3)(LCD_PCF8574_HandleTypeDef* lcd);
  };
-typedef struct submenu1 submenu1;
+typedef struct submenu submenu;
 
-submenu1 stworzSubMenu1 (void);
+submenu stworzSubMenu(void);
 
 #endif /* MENUANDSUBMENU_H_ */

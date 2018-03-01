@@ -1,5 +1,5 @@
 /*
- * Struct&Fun.c
+ * MenuAndSubMenu.c
  *
  *  Created on:
  *      Author:
@@ -11,15 +11,24 @@
 
 //------------------------Menu--------------------------------------
 
-void moje_urzadzenie_tryb_pracy (LCD_PCF8574_HandleTypeDef* lcd)
-{
-	 LCD_SetLocation(lcd, 0, 1);
-	 LCD_WriteString(lcd, "2. Mode     ");
+ void moje_urzadzenie_zaprogram(LCD_PCF8574_HandleTypeDef* lcd)
+ {
+	 LCD_SetLocation(lcd, 0, 0);
+	 LCD_WriteString(lcd, "1. Program     ");
+	 if(isPressed)
+	 {
+		 /* sth to do */
+	 }
+ }
 
+void moje_urzadzenie_tryb_pracy(LCD_PCF8574_HandleTypeDef* lcd)
+{
+	 LCD_SetLocation(lcd, 0, 0);
+	 LCD_WriteString(lcd, "2. Mode        ");
 
 	if (isPressed)
 	{
-		submenu1 trybPracy = stworzSubMenu1();
+		submenu trybPracy = stworzSubMenuTrybuPracy();
 		isPressed = 0;
 		TIM1->CNT=8;
 		while(1)
@@ -30,79 +39,165 @@ void moje_urzadzenie_tryb_pracy (LCD_PCF8574_HandleTypeDef* lcd)
 			switch( positions % 3)
 			{
 				case 2 :
-					trybPracy.manual(lcd);
+					trybPracy.action1(lcd); // automat
 					break;
 				case 1 :
-					trybPracy.automat(lcd);
+					trybPracy.action2(lcd); // manual
 					break;
 				case 0 :
-					LCD_SetLocation(lcd, 0, 1);
-					LCD_WriteString(lcd, "3. Exit     ");
-					if(isPressed == 1){
-						isPressed = 0;
-						TIM1->CNT=8;
-						return;
-					}
+					trybPracy.action3(lcd); // powrot
 					break;
 			}
 			isPressed = 0;
+			if(backPressed)
+			{
+				backPressed = 0;
+				TIM1->CNT=12;  // powrot do drugiej pozycji w glownym menu
+				return;
+			}
 		}
 	}
 }
- void moje_urzadzenie_zaprogram(LCD_PCF8574_HandleTypeDef* lcd)
- {
-	 LCD_SetLocation(lcd, 0, 1);
-	 LCD_WriteString(lcd, "1. Program  ");
 
-	 /* sth to do */
+void moje_urzadzenie_adjust(LCD_PCF8574_HandleTypeDef* lcd)
+{
+	 LCD_SetLocation(lcd, 0, 0);
+	 LCD_WriteString(lcd, "3. Set value     "); // przykladowa pozycja w menu do ustawiania jakiejs wartosci
+	 if (isPressed)
+	 {
+		 isPressed = 0;
+		 TIM1->CNT=396;  // zerowanie pozycji enkodera (podlaczony jest odwrotnie wiec ustawiona jest wartosc prawie maksymalna)
+		 LCD_ClearDisplay(lcd);
+		 LCD_SetLocation(lcd, 0, 0);
+		 LCD_WriteString(lcd, "Current val: ");
+		 char str[4];
+		 sprintf(str, "%d", valueToSet); // zamiana valueToSet na ciag znakow i wpisywanie go do tablicy str
+		 LCD_WriteString(lcd,strcat(str," "));
+		 LCD_SetLocation(lcd, 0, 1);
+		 LCD_WriteString(lcd, "New value: ");
+		 while(1)
+		 {
+			 LCD_SetLocation(lcd, 11, 1);
+			 pulse_count = TIM1->CNT;     // przepisanie wartosci z rejestru timera
+			 positions = pulse_count/4;
+			 positions = 99 - positions % 100;
+			 char str1[4];
+			 sprintf(str1, "%d", positions); // zamiana positions na ciag znakow i wpisywanie go do tablicy str1
+			 LCD_WriteString(lcd,strcat(str1, " "));
+			 if(isPressed){        // zatwierdzenie i zapis
+				 valueToSet = positions;
+				 isPressed = 0;
+				 LCD_ClearDisplay(lcd);
+				 TIM1->CNT=8;      // powrot na 3 pozycje glownego menu
+				 return;
+			 }
+			 else if(backPressed){ // powrot bez zapisu
+				 backPressed = 0;
+				 LCD_ClearDisplay(lcd);
+				 TIM1->CNT=8;
+				 return;
+			 }
+		 }
+	 }
+}
 
- }
+void moje_urzadzenie_hold(LCD_PCF8574_HandleTypeDef* lcd)
+{
+	 LCD_SetLocation(lcd, 0, 0);
+	 LCD_WriteString(lcd, "4. Hold         ");
+	 if (isPressed)
+	 {
+		 /* sth to do */
+	 }
+}
 
- void moje_urzadzenie_zamknij (LCD_PCF8574_HandleTypeDef* lcd)
- {
-	 LCD_SetLocation(lcd, 0, 1);
-	 LCD_WriteString(lcd, "4. Exit    ");
+void moje_urzadzenie_zamknij(LCD_PCF8574_HandleTypeDef* lcd)
+{
+	 LCD_SetLocation(lcd, 0, 0);
+	 LCD_WriteString(lcd, "5. Exit         ");
+	 if (isPressed)
+	 {
+	 	 /* sth to do */
+	 }
+}
 
-	 /* sth to do */
- }
-
- menu stworz (void)
+ menu stworzMenu(void)
  {
    menu moje_menu;
    moje_menu.zaprogram = moje_urzadzenie_zaprogram;
-   moje_menu.zamknij = moje_urzadzenie_zamknij;
    moje_menu.tryb = moje_urzadzenie_tryb_pracy;
+   moje_menu.hold = moje_urzadzenie_hold;
+   moje_menu.adjust = moje_urzadzenie_adjust;
+   moje_menu.zamknij = moje_urzadzenie_zamknij;
    return moje_menu;
  }
 
- //---------------------SubMenu1------------------------------------------------------
+ //---------------------SubMenu1 - menu wyboru trybu ------------------------------------------------------
 
  void tryb_manual (LCD_PCF8574_HandleTypeDef* lcd)
   {
- 	 LCD_SetLocation(lcd, 0, 1);
- 	 LCD_WriteString(lcd, "1. Manual  ");
+ 	 LCD_SetLocation(lcd, 0, 0);
+ 	 LCD_WriteString(lcd, "1. Manual      ");
  	 if (isPressed)
  	 {
- 		 /* sth to do */
+ 		/* sth to do */
  	 }
   }
 
   void tryb_automat (LCD_PCF8574_HandleTypeDef* lcd)
   {
- 	 LCD_SetLocation(lcd, 0, 1);
- 	 LCD_WriteString(lcd, "2. Automat  ");
+ 	 LCD_SetLocation(lcd, 0, 0);
+ 	 LCD_WriteString(lcd, "2. Automat      ");
  	if (isPressed){
 
  	 	/* sth to do */
 
  	}
   }
-
-  submenu1 stworzSubMenu1 (void)
+  void powrot (LCD_PCF8574_HandleTypeDef* lcd)
   {
-    submenu1 moje_submenu1;
-    moje_submenu1.manual = tryb_manual;
-    moje_submenu1.automat = tryb_automat;
-    return moje_submenu1;
+  	 LCD_SetLocation(lcd, 0, 0);
+  	 LCD_WriteString(lcd, "3. Exit        ");
+  	if(isPressed == 1)
+  	{
+  		isPressed = 0;
+  		backPressed = 1;
+  	}
   }
 
+  submenu stworzSubMenuTrybuPracy(void)
+  {
+    submenu moje_submenu;
+    moje_submenu.action1 = tryb_manual;
+    moje_submenu.action2 = tryb_automat;
+    moje_submenu.action3 = powrot;
+    return moje_submenu;
+  }
+  //---------------------SubMenu2 - menu ... ------------------------------------------------------
+  /* Prototypy funkcji
+  void action1()
+  {
+
+  }
+
+  void action2()
+  {
+
+  }
+
+  void action3()
+  {
+
+  }
+
+  **Tworzenie submenu**
+
+  submenu stworzSubMenu...(void)
+  {
+    submenu moje_submenu;
+    moje_submenu.action1 = action1;
+    moje_submenu.action2 = action2;
+    moje_submenu.action3 = action3;
+    return moje_submenu;
+
+  } */
