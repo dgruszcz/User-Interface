@@ -9,7 +9,18 @@
 #include <string.h>
 #include "MenuAndSubMenu.h"
 
-//------------------------Menu--------------------------------------
+//------------------------Menu Glowne--------------------------------------
+
+menu stworzMenu(void)
+ {
+   menu moje_menu;
+   moje_menu.zaprogram = moje_urzadzenie_zaprogram;
+   moje_menu.tryb = moje_urzadzenie_tryb_pracy;
+   moje_menu.hold = moje_urzadzenie_hold;
+   moje_menu.adjust = moje_urzadzenie_adjust;
+   moje_menu.zamknij = moje_urzadzenie_zamknij;
+   return moje_menu;
+ }
 
  void moje_urzadzenie_zaprogram(LCD_PCF8574_HandleTypeDef* lcd)
  {
@@ -123,20 +134,18 @@ void moje_urzadzenie_zamknij(LCD_PCF8574_HandleTypeDef* lcd)
 	 }
 }
 
- menu stworzMenu(void)
- {
-   menu moje_menu;
-   moje_menu.zaprogram = moje_urzadzenie_zaprogram;
-   moje_menu.tryb = moje_urzadzenie_tryb_pracy;
-   moje_menu.hold = moje_urzadzenie_hold;
-   moje_menu.adjust = moje_urzadzenie_adjust;
-   moje_menu.zamknij = moje_urzadzenie_zamknij;
-   return moje_menu;
- }
-
  //---------------------SubMenu1 - menu wyboru trybu ------------------------------------------------------
 
- void tryb_manual (LCD_PCF8574_HandleTypeDef* lcd)
+submenu stworzSubMenuTrybuPracy(void)
+{
+  submenu moje_submenu;
+  moje_submenu.action1 = tryb_manual;
+  moje_submenu.action2 = tryb_automat;
+  moje_submenu.action3 = powrot;
+  return moje_submenu;
+}
+
+void tryb_manual (LCD_PCF8574_HandleTypeDef* lcd)
   {
  	 LCD_SetLocation(lcd, 0, 0);
  	 LCD_WriteString(lcd, "1. Manual      ");
@@ -167,14 +176,6 @@ void moje_urzadzenie_zamknij(LCD_PCF8574_HandleTypeDef* lcd)
   	}
   }
 
-  submenu stworzSubMenuTrybuPracy(void)
-  {
-    submenu moje_submenu;
-    moje_submenu.action1 = tryb_manual;
-    moje_submenu.action2 = tryb_automat;
-    moje_submenu.action3 = powrot;
-    return moje_submenu;
-  }
   //---------------------SubMenu2 - menu ... ------------------------------------------------------
   /* Prototypy funkcji
   void action1()

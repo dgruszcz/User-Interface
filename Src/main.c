@@ -59,10 +59,10 @@ TIM_HandleTypeDef htim10;
 /* Private variables ---------------------------------------------------------*/
 LCD_PCF8574_HandleTypeDef lcd;
 volatile uint16_t pulse_count; // Licznik impulsow TRZEBA PODPIAC D8 (A) i D7 (B)
-volatile uint16_t positions; // Licznik przekreconych pozycji
+volatile uint16_t positions;   // Licznik przekreconych pozycji
 volatile uint16_t valueToSet = 0; // wartosc do ustawienia
-bool isPressed=0; //zmienna informujaca czy przycisk zostal wcisniety 1 - tak , 0 - nie
-bool backPressed=0; // 1 - wcisnieto przycisk powrotu
+bool isPressed=0;      // zmienna informujaca czy przycisk zostal wcisniety 1 - tak , 0 - nie
+bool backPressed=0;    // 1 - wcisnieto przycisk powrotu
 bool flag1=0, flag2=0; // zmienne do usuwania zjawiska drgan na stkach przyciskow
 /* USER CODE END PV */
 
@@ -76,7 +76,7 @@ static void MX_TIM10_Init(void);
 
 /* USER CODE BEGIN PFP */
 /* Private function prototypes -----------------------------------------------*/
-void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){// obsluga przycisku enkodera oraz przycisku powrotu
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){ // obsluga przycisku enkodera oraz przycisku powrotu
 	if(flag2 == 1) return; // przerwanie zostalo wywolane zbyt szybko po wystapieniu poprzedniego - drgania
 	if(GPIO_Pin == LCD_BUTTON_Pin)
 	{
@@ -145,7 +145,7 @@ int main(void)
 
   LCD_ClearDisplay(&lcd);
 
-  menu mainMenu = stworzMenu();//stworzenie menu
+  menu mainMenu = stworzMenu(); // stworzenie menu
  // TIM1->CNT= 0; // nie jestem pewien czy powinno sie tak robić ale bardzo przydatna jest taka operacja
   	  	  	  	  // do poruszania sie po menu, w sumie mam pomysl jak to obejsc za pomoca jakiejs zmiennej
   	  	  	  	  // ale jesli takie przypisanie jest w porzadku to nie wiem czy jest potrzeba zmieniac
@@ -176,7 +176,7 @@ int main(void)
 	 		  mainMenu.zamknij(&lcd);
 	 		  break;
 	 	  }
-	 	 isPressed = 0; // nie da sie wejsc do niektorych pozycji menu a zapamietywanie przycisniecia jest w tym wypadku niepozadane
+	 	 isPressed = 0; // nie da sie wejsc do niektorych pozycji menu a zapamietywanie wcisniecia jest w tym wypadku niepozadane
 	 	 backPressed = 0;
   /* USER CODE END WHILE */
 
