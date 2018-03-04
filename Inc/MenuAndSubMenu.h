@@ -14,7 +14,8 @@
 
 extern volatile uint16_t pulse_count; // Licznik impulsow TRZEBA PODPI�� D8 (A) i D7  volatile uint16_t pulse_count; // Licznik impulsow TRZEBA PODPI�� D8 (A) i D7 (B)volatile uint16_t pulse_count; // Licznik impulsow TRZEBA PODPI�� D8 (A) i D7 (B)
 extern volatile uint16_t positions; //licznik enkodera
-extern bool isPressed; //czy guzik wcisniety
+extern volatile uint16_t valueToSet;
+extern bool isPressed, backPressed; //czy guzik wcisniety
 
 //------------------------Menu--------------------------------------
 
@@ -36,8 +37,9 @@ struct submenu {
    void (*action2)(LCD_PCF8574_HandleTypeDef* lcd);
    void (*action3)(LCD_PCF8574_HandleTypeDef* lcd);
  };
+
 typedef struct submenu submenu;
 
-submenu stworzSubMenu(void);
+submenu stworzSubMenuTrybuPracy(void);
 
 #endif /* MENUANDSUBMENU_H_ */
