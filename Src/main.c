@@ -76,7 +76,7 @@ static void MX_TIM10_Init(void);
 
 /* USER CODE BEGIN PFP */
 /* Private function prototypes -----------------------------------------------*/
-void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){//obsluga przycisku enkodera
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){// obsluga przycisku enkodera oraz przycisku powrotu
 	if(flag2 == 1) return; // przerwanie zostalo wywolane zbyt szybko po wystapieniu poprzedniego - drgania
 	if(GPIO_Pin == LCD_BUTTON_Pin)
 	{
@@ -146,32 +146,33 @@ int main(void)
   LCD_ClearDisplay(&lcd);
 
   menu mainMenu = stworzMenu();//stworzenie menu
-  TIM1->CNT=16;
-
+ // TIM1->CNT= 0; // nie jestem pewien czy powinno sie tak robić ale bardzo przydatna jest taka operacja
+  	  	  	  	  // do poruszania sie po menu, w sumie mam pomysl jak to obejsc za pomoca jakiejs zmiennej
+  	  	  	  	  // ale jesli takie przypisanie jest w porzadku to nie wiem czy jest potrzeba zmieniac
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	  pulse_count = TIM1->CNT; // przepisanie wartosci z rejestru timera
+	  pulse_count = TIM1->CNT;   // przepisanie wartosci z rejestru timera
 	  positions = pulse_count/4; // zeskalowanie impulsow do liczby stabilnych pozycji walu enkodera
 
 	 	  switch( positions % 5)
 	 	  {
-	 	  case 4 :
+	 	  case 0 :
 	 		 mainMenu.zaprogram(&lcd);
 	 	      break;
-	 	  case 3 :
+	 	  case 1 :
 	 		  mainMenu.tryb(&lcd);
 	 	      break;
 	 	  case 2 :
 	 		  mainMenu.adjust(&lcd);
 	 	  	  break;
-	 	  case 1:
+	 	  case 3:
 	 		  mainMenu.hold(&lcd);
 	 		  break;
-	 	  case 0 :
+	 	  case 4 :
 	 		  mainMenu.zamknij(&lcd);
 	 		  break;
 	 	  }
@@ -294,7 +295,7 @@ static void MX_TIM1_Init(void)
 
   htim1.Instance = TIM1;
   htim1.Init.Prescaler = 0;
-  htim1.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim1.Init.CounterMode = TIM_COUNTERMODE_DOWN;
   htim1.Init.Period = 403;
   htim1.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim1.Init.RepetitionCounter = 0;
@@ -326,9 +327,9 @@ static void MX_TIM10_Init(void)
 {
 
   htim10.Instance = TIM10;
-  htim10.Init.Prescaler = 15999;
+  htim10.Init.Prescaler = 1999;
   htim10.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim10.Init.Period = 20;
+  htim10.Init.Period = 499;
   htim10.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   if (HAL_TIM_Base_Init(&htim10) != HAL_OK)
   {

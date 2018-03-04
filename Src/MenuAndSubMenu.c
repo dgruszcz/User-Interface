@@ -6,7 +6,7 @@
  */
 
 #include <stdbool.h>
-
+#include <string.h>
 #include "MenuAndSubMenu.h"
 
 //------------------------Menu--------------------------------------
@@ -30,7 +30,7 @@ void moje_urzadzenie_tryb_pracy(LCD_PCF8574_HandleTypeDef* lcd)
 	{
 		submenu trybPracy = stworzSubMenuTrybuPracy();
 		isPressed = 0;
-		TIM1->CNT=8;
+		TIM1->CNT = 0;
 		while(1)
 		{
 			pulse_count = TIM1->CNT; // przepisanie wartosci z rejestru timera
@@ -38,13 +38,13 @@ void moje_urzadzenie_tryb_pracy(LCD_PCF8574_HandleTypeDef* lcd)
 
 			switch( positions % 3)
 			{
-				case 2 :
+				case 0 :
 					trybPracy.action1(lcd); // automat
 					break;
 				case 1 :
 					trybPracy.action2(lcd); // manual
 					break;
-				case 0 :
+				case 2 :
 					trybPracy.action3(lcd); // powrot
 					break;
 			}
@@ -52,7 +52,7 @@ void moje_urzadzenie_tryb_pracy(LCD_PCF8574_HandleTypeDef* lcd)
 			if(backPressed)
 			{
 				backPressed = 0;
-				TIM1->CNT=12;  // powrot do drugiej pozycji w glownym menu
+				TIM1->CNT = 4;  // powrot do drugiej pozycji w glownym menu
 				return;
 			}
 		}
@@ -66,35 +66,37 @@ void moje_urzadzenie_adjust(LCD_PCF8574_HandleTypeDef* lcd)
 	 if (isPressed)
 	 {
 		 isPressed = 0;
-		 TIM1->CNT=396;  // zerowanie pozycji enkodera (podlaczony jest odwrotnie wiec ustawiona jest wartosc prawie maksymalna)
+		 TIM1->CNT = 0;  // zerowanie pozycji enkodera
 		 LCD_ClearDisplay(lcd);
 		 LCD_SetLocation(lcd, 0, 0);
 		 LCD_WriteString(lcd, "Current val: ");
-		 char str[4];
+		 char str[6];
 		 sprintf(str, "%d", valueToSet); // zamiana valueToSet na ciag znakow i wpisywanie go do tablicy str
-		 LCD_WriteString(lcd,strcat(str," "));
+
+		 const char *strPom = "  ";      // do zmiennej doklejane sa dwa biale znaki by nadpisywac zbedne
+		                                 // cyfry pozostale po przeskoczeniu np z trzycyfrowej liczby na jednocyfrowa
+		 LCD_WriteString(lcd, strcat(str,strPom));
 		 LCD_SetLocation(lcd, 0, 1);
 		 LCD_WriteString(lcd, "New value: ");
 		 while(1)
 		 {
 			 LCD_SetLocation(lcd, 11, 1);
 			 pulse_count = TIM1->CNT;     // przepisanie wartosci z rejestru timera
-			 positions = pulse_count/4;
-			 positions = 99 - positions % 100;
-			 char str1[4];
+			 positions = pulse_count/4;   // positions zmienia sie w zakresie od 0 do 100
+			 char str1[6];
 			 sprintf(str1, "%d", positions); // zamiana positions na ciag znakow i wpisywanie go do tablicy str1
-			 LCD_WriteString(lcd,strcat(str1, " "));
+			 LCD_WriteString(lcd,strcat(str1, strPom));
 			 if(isPressed){        // zatwierdzenie i zapis
 				 valueToSet = positions;
 				 isPressed = 0;
-				 LCD_ClearDisplay(lcd);
-				 TIM1->CNT=8;      // powrot na 3 pozycje glownego menu
-				 return;
-			 }
-			 else if(backPressed){ // powrot bez zapisu
 				 backPressed = 0;
 				 LCD_ClearDisplay(lcd);
-				 TIM1->CNT=8;
+				 TIM1->CNT = 8;      // powrot na 3 pozycje glownego menu
+				 return;
+			 } else if(backPressed){ // powrot bez zapisu
+				 backPressed = 0;
+				 LCD_ClearDisplay(lcd);
+				 TIM1->CNT = 8;
 				 return;
 			 }
 		 }
