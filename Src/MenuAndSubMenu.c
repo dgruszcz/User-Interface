@@ -2,7 +2,7 @@
  * MenuAndSubMenu.c
  *
  *  Created on:
- *      Author:
+ *      Authors: Dawid and Michal
  */
 
 #include <stdbool.h>

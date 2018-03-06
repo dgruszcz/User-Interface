@@ -63,7 +63,7 @@ volatile uint16_t positions;   // Licznik przekreconych pozycji
 volatile uint16_t valueToSet = 0; // wartosc do ustawienia
 bool isPressed=0;      // zmienna informujaca czy przycisk zostal wcisniety 1 - tak , 0 - nie
 bool backPressed=0;    // 1 - wcisnieto przycisk powrotu
-bool flag1=0, flag2=0; // zmienne do usuwania zjawiska drgan na stkach przyciskow
+bool flag1=0, flag2=0; // zmienne do usuwania zjawiska drgan na stykach przyciskow
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -145,10 +145,7 @@ int main(void)
 
   LCD_ClearDisplay(&lcd);
 
-  menu mainMenu = stworzMenu(); // stworzenie menu
- // TIM1->CNT= 0; // nie jestem pewien czy powinno sie tak robić ale bardzo przydatna jest taka operacja
-  	  	  	  	  // do poruszania sie po menu, w sumie mam pomysl jak to obejsc za pomoca jakiejs zmiennej
-  	  	  	  	  // ale jesli takie przypisanie jest w porzadku to nie wiem czy jest potrzeba zmieniac
+  menu mainMenu = stworzMenu(); // tworzenie glownego menu
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -176,8 +173,8 @@ int main(void)
 	 		  mainMenu.zamknij(&lcd);
 	 		  break;
 	 	  }
-	 	 isPressed = 0; // nie da sie wejsc do niektorych pozycji menu a zapamietywanie wcisniecia jest w tym wypadku niepozadane
-	 	 backPressed = 0;
+	 	 isPressed = 0;   // nie da sie wejsc do niektorych pozycji menu a zapamietywanie wcisniecia
+	 	 backPressed = 0; // jest w tym wypadku niepozadane; do usuniecia po doprawcowaniu menu
   /* USER CODE END WHILE */
 
   /* USER CODE BEGIN 3 */
